@@ -10,14 +10,26 @@ class Thermostat
 {
     public:
 
-    Thermostat( ThermostatConfig config ) : config(config) {}
+    Thermostat( const ThermostatConfig config ) : config(config) {}
 
     void run();
 
 
     private:
 
-    ThermostatConfig config;
+    const ThermostatConfig config;
+    double currentTemperature;
+    bool heaterOn;
+
+    bool getTemperature();
+
+    double getSetpoint();
+
+    void updateHeaterStatus();
+    void updateHeaterFile();
+    void updateHeaterServer();
+
+    void updateTemperatureServer();
 
 };
 

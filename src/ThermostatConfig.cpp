@@ -33,32 +33,32 @@ void ThermostatConfig::store_line( const std::string key, const std::string valu
     config_map.insert( std::make_pair( key, value ) );
 }
 
-std::string ThermostatConfig::get_URL()
+std::string ThermostatConfig::get_URL() const
 {
     return getConfigValue("URL");
 }
 
-std::string ThermostatConfig::getUsername()
+std::string ThermostatConfig::getUsername() const
 {
     return getConfigValue("Username");
 }
 
-std::string ThermostatConfig::getPassword()
+std::string ThermostatConfig::getPassword() const
 {
     return getConfigValue("Password");
 }
 
-std::string ThermostatConfig::getTemperatureFile()
+std::string ThermostatConfig::getTemperatureFile() const
 {
     return getConfigValue("TemperatureFile");
 }
 
-std::string ThermostatConfig::getHeaterFile()
+std::string ThermostatConfig::getHeaterFile() const
 {
     return getConfigValue("HeaterFile");
 }
 
-std::string ThermostatConfig::getConfigValue( const std::string key )
+std::string ThermostatConfig::getConfigValue( const std::string key ) const
 {
     try
     {
