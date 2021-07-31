@@ -1,12 +1,13 @@
-CXX=g++
-CXXFLAGS=
+BUILDROOT_HOME := /home/osboxes/buildroot
+
+CXX:=$(BUILDROOT_HOME)/output/host/usr/bin/arm-linux-g++
+CXXFLAGS=--sysroot=$(BUILDROOT_HOME)/output/staging
 LFLAGS=
-LIBS=
-DFLAGS=-DDEBUG
+LIBS=-lcurlpp -lcurl -uClibc -lc
 
 SRCDIR := src
 INCDIR := inc
-BUILDDIR := obj
+BUILDDIR := armobj
 
 SRCEXT := cpp
 OBJEXT := o
@@ -14,27 +15,16 @@ OBJEXT := o
 INC := -I$(INCDIR)
 
 SRC := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
-$(info $$SRC is [${SRC}])
 OBJ := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SRC:.$(SRCEXT)=.$(OBJEXT)))
-$(info $$OBJ is [${OBJ}])
 
 MAIN=thermo
 
 RM=rm -rf
-
-#remake: cleaner all
-
-#clean:
-#	$(RM) $(OBJECTDIR)
-
-#cleaner: clean
-#	$(RM) $(TARGETDIR)
 
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $<
 
 $(MAIN): $(OBJ)
-	$(CXX) -o $(MAIN) $^ $(LIB)
-
-.PHONY: all remake clean cleaner
+	$(CXX) -o $(MAIN) $^ $(LIBS)
+	scp -P 2222 $(MAIN) user@localhost:~/

@@ -1,5 +1,7 @@
 #include "Thermostat.h"
 
+#include "ThermostatNetwork.h"
+
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -23,12 +25,17 @@ void Thermostat::run()
     std::string password = config.getPassword();
     std::string heaterFileName = config.getHeaterFile();
 
+    network.getTime();
+    network.login();
+
+    double setpoint = getSetpoint();
+
+    // make sure that we update these statuses the first loop
+    bool heaterChanged = true;
+    bool temperatureChanged = true;
     while( true )
     {
     
-    bool heaterChanged = false;
-    bool temperatureChanged = false;
-
     /* TODO: Each time through the loop, I should:
     
     * Get current temperature from file  <---- DONE ---->
@@ -47,18 +54,23 @@ void Thermostat::run()
 
         // temporary setpoint - TODO: should be read by server
         // TODO: double setpoint = getCurrentSetpoint();
-    double setpoint = 70;
+    time_t now = time(NULL);
+    // get setpoint once each minute
+    if( ( now % 60 ) == 0 )
+    {
+        setpoint = getSetpoint();
+    }
 
     // compare temperature and setpoint
     // set status as:
     // * if heater is off and temperature is at least one degree below setpoint, turn it on
     // * if heater is on and temperature is at least one degree above setpoint, turn it off
-    if( !heaterOn && ( currentTemperature < ( setpoint - 1.0) ) )
+    if( !heaterOn && ( currentTemperature <= ( setpoint - 1.0) ) )
     {
         heaterOn = true;
         heaterChanged = true;
     }
-    else if( heaterOn && ( currentTemperature > ( setpoint + 1 ) ) )
+    else if( heaterOn && ( currentTemperature >= ( setpoint + 1 ) ) )
     {
         heaterOn = false;
         heaterChanged = true;
@@ -68,14 +80,16 @@ void Thermostat::run()
     if( heaterChanged )
     {
         updateHeaterStatus();
+        heaterChanged = false;
     }
 
     if( temperatureChanged )
     {
-        // TODO: updateTemperatureServer();
+        updateTemperatureServer();
+        temperatureChanged = false;
     }
 
-    sleep( 10 );
+    sleep( 1 );
 
     }
 }
@@ -90,10 +104,9 @@ bool Thermostat::getTemperature()
     if(oldTemperature != currentTemperature)
     {
         temperatureChanged = true;
+       syslog(LOG_INFO, "Detected new temperature %f\n", currentTemperature );
     }
-    
-    // DEBUG
-    std::cout << currentTemperature << std::endl;
+
     return temperatureChanged;
 
 }
@@ -102,7 +115,7 @@ void Thermostat::updateHeaterStatus()
 {
 
     updateHeaterFile();
-    // TODO: updateHeaterServer();
+    updateHeaterServer();
 }
 
 void Thermostat::updateHeaterFile()
@@ -111,5 +124,23 @@ void Thermostat::updateHeaterFile()
     time_t now = time(NULL);
     
     heaterFile << ( heaterOn ? "ON" : "OFF" ) << " " << ctime( &now ) << std::endl;
+    syslog(LOG_INFO, "Updating %s to %s\n", config.getHeaterFile(), ( heaterOn ? "ON" : "OFF" ) );
 }
 
+void Thermostat::updateHeaterServer()
+{
+    network.updateHeaterStatus( heaterOn );
+    syslog(LOG_INFO, "Updated Server to %s\n", ( heaterOn ? "ON" : "OFF" ) );
+}
+
+void Thermostat::updateTemperatureServer()
+{
+    network.updateTemperature( currentTemperature );
+}
+
+double Thermostat::getSetpoint()
+{
+    double setpoint = network.getCurrentSetpoint();
+
+    return setpoint;
+}

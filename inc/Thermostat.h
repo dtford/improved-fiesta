@@ -5,12 +5,15 @@
 #include <map>
 
 #include "ThermostatConfig.h"
+#include "ThermostatNetwork.h"
 
 class Thermostat
 {
     public:
 
-    Thermostat( const ThermostatConfig config ) : config(config) {}
+    Thermostat( const ThermostatConfig config ) : config(config), network(config.get_URL(), config.getUsername(), config.getPassword() ) {
+                
+    }
 
     void run();
 
@@ -18,8 +21,9 @@ class Thermostat
     private:
 
     const ThermostatConfig config;
-    double currentTemperature;
-    bool heaterOn;
+    double currentTemperature = 0;
+    bool heaterOn = false;
+    ThermostatNetwork network;
 
     bool getTemperature();
 

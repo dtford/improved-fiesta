@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 
+#include<curlpp/cURLpp.hpp>
+
 #include <signal.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -64,6 +66,7 @@ static void _handle_fork( const pid_t pid )
     
     if(pid > 0)
     {
+        syslog(LOG_INFO, "Starting thermod on pid %d\n", pid );
         exit(OK);
     }
 }
@@ -99,9 +102,8 @@ static void _daemonize(void)
 	// close stdin, stdout, etc.
 	for( long x = sysconf(_SC_OPEN_MAX); x >= 0; --x )
 	{
-		close(x);
+//		close(x);
 	}
-
 }
 
 static std::string _readopts( int argc, char **argv )
@@ -161,9 +163,12 @@ int main( int argc, char **argv )
 {
 
 // we will eventually daemonize this
-//	_daemonize(); 
+	_daemonize(); 
 
     std::string configFile = _readopts( argc, argv );
+
+    // run only once curlpp init
+    curlpp::Cleanup curlCleaner;
 
     ThermostatConfig thermostatConfig( configFile );
 
